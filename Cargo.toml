@@ -1,0 +1,10 @@
+[package]
+name = "app_therapy"
+version = "0.1.0"
+authors = ["leakybucket <DamnBigMan@gmail.com>"]
+
+[dependencies]
+postgres = "*"
+serde = "*"
+serde_json = "*"
+serde_derive = "*"
