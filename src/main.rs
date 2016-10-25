@@ -42,6 +42,10 @@ struct Args {
 }
 
 fn main() {
+    let args: Args = Docopt::new(USAGE)
+                      .and_then(|d| d.decode())
+                      .unwrap_or_else(|e| e.exit());
+
     let config = match config::load_config() {
         Some(config) => config,
         None => panic!("Failed to parse config file!"),
