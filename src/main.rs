@@ -2,8 +2,9 @@ extern crate app_therapy;
 extern crate rustc_serialize;
 extern crate docopt;
 
-use app_therapy::config;
 use docopt::Docopt;
+use app_therapy::config::*;
+use std:net::{TcpListener, TcpStream};
 
 const USAGE: &'static str = "
 App Therapy.
@@ -45,6 +46,11 @@ fn main() {
     let args: Args = Docopt::new(USAGE)
                       .and_then(|d| d.decode())
                       .unwrap_or_else(|e| e.exit());
+
+    match &args.flag_agent {
+        True => as_agent(args),
+        False => as_client(args),
+    }
 
     let config = match config::load_config() {
         Some(config) => config,
