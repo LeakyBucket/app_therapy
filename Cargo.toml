@@ -5,7 +5,15 @@ authors = ["leakybucket <DamnBigMan@gmail.com>"]
 
 [dependencies]
 postgres = "*"
+
+# config parsing
 serde = "*"
 serde_json = "*"
 serde_derive = "*"
+
+# message encryption
 sodiumoxide = "*"
+
+# For arg stuff
+docopt = "*"
+rustc-serialize = "*"
