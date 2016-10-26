@@ -9,3 +9,4 @@ pub mod dbms;
 pub mod config;
 pub mod crypto;
 pub mod client;
+pub mod server;

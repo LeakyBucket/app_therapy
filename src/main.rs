@@ -2,9 +2,15 @@ extern crate app_therapy;
 extern crate rustc_serialize;
 extern crate docopt;
 
-use docopt::Docopt;
 use app_therapy::config::*;
-use std:net::{TcpListener, TcpStream};
+use app_therapy::client;
+use app_therapy::crypto;
+use app_therapy::server;
+
+use docopt::Docopt;
+use std::error::Error;
+use std::net::{TcpListener, TcpStream};
+use std::thread;
 
 const USAGE: &'static str = "
 App Therapy.
@@ -58,4 +64,21 @@ fn main() {
     };
 
     println!("User: {}\nPassword: {}", config.user.login, config.user.password);
+}
+
+fn as_agent(args: Args, config: Config) {
+    let listener = TcpListener::bind(&config.agent_address).unwrap();
+
+    for stream in listener.incoming() {
+        match stream {
+            Ok(stream) => {
+                thread::spawn(move|| {
+                    server::process_request(stream)
+                });
+            },
+            Err(e) => {
+                println!("There was a problem with the connection {}", e.description());
+            }
+        }
+    }
 }
