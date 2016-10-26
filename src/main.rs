@@ -53,15 +53,17 @@ fn main() {
                       .and_then(|d| d.decode())
                       .unwrap_or_else(|e| e.exit());
 
-    match &args.flag_agent {
-        True => as_agent(args),
-        False => as_client(args),
-    }
-
-    let config = match config::load_config() {
+    let config = match load_config() {
         Some(config) => config,
         None => panic!("Failed to parse config file!"),
     };
+
+    println!("{:?}", args);
+
+    match &args.flag_agent {
+        True => as_agent(args, config),
+        False => as_client(args, config),
+    }
 
     println!("User: {}\nPassword: {}", config.user.login, config.user.password);
 }
