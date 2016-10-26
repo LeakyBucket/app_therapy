@@ -5,13 +5,21 @@ use serde_json;
 
 #[derive(Deserialize)]
 pub struct Config {
-    pub user: User
+    pub agent_address: String,
+    pub user: User,
+    pub crypto: Crypto,
 }
 
 #[derive(Deserialize)]
 pub struct User {
     pub login: String,
-    pub password: String
+    pub password: String,
+}
+
+#[derive(Deserialize)]
+pub struct Crypto {
+    pub pub_key_file: String,
+    pub priv_key_file: String,
 }
 
 pub fn load_config() -> Option<Config> {
