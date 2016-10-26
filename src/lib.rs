@@ -8,3 +8,4 @@ extern crate sodiumoxide;
 pub mod dbms;
 pub mod config;
 pub mod crypto;
+pub mod client;
