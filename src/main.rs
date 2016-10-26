@@ -82,3 +82,37 @@ fn as_agent(args: Args, config: Config) {
         }
     }
 }
+
+fn as_client(args: Args, config: Config) {
+    let mut stream = client::connect(&config.agent_address);
+
+    let pk = match crypto::to_pub(&config.crypto.pub_key_file) {
+        Some(key) => key,
+        None => panic!("Failed to retrieve public key"),
+    };
+
+    let sk = match crypto::to_priv(&config.crypto.priv_key_file) {
+        Some(key) => key,
+        None => panic!("Failed to retrieve secret key"),
+    };
+
+    // Figure out what our op is
+    let op = match args.cmd_exec {
+        True => vec!(String::from("exec")),
+        False => match args.arg_component {
+            Some(component) => component,
+            None => panic!("No component specified!"),
+        }
+    };
+
+    // Figure out what our command is, if there is one
+    let command = match args.arg_command {
+        Some(command) => command,
+        None => match args.arg_action {
+            Some(action) => action,
+            None => vec!(String::from("")),
+        }
+    };
+
+    let message = crypto::new_box(&args.arg_component, &pk, &sk);
+}
