@@ -18,6 +18,7 @@ App Therapy.
 Usage:
   app_therapy (-h | --help)
   app_therapy --version
+  app_therapy --gen-keys
   app_therapy --agent [--config=<config_file>]
   app_therapy exec <command> --app=<application> [--config=<config_file>]
   app_therapy <component> [<action>] --app=<application>
@@ -26,6 +27,7 @@ Options:
   -h, --help              Show this screen
   --version               Show version
   --agent                 Launch in agent mode (Listen for incomming commands)
+  --gen-keys              Generate public and private keys
   --config=<config_file>  Specify the configuration file to be used
   --app=<application>     Specify the application context to use
 
@@ -39,6 +41,7 @@ Subcommands:
 struct Args {
     flag_agent: bool,
     flag_config: Vec<String>,
+    flag_gen_keys: bool,
     flag_version: bool,
     cmd_exec: bool,
     arg_application: Option<Vec<String>>,
@@ -60,9 +63,12 @@ fn main() {
 
     println!("{:?}", args);
 
-    match &args.flag_agent {
-        True => as_agent(args, config),
-        False => as_client(args, config),
+    match &args.flag_gen_keys {
+        &true => crypto::generate_keys(),
+        &false => match &args.flag_agent {
+            &true => as_agent(args, config),
+            &false => as_client(args, config),
+        }
     }
 
     println!("User: {}\nPassword: {}", config.user.login, config.user.password);
