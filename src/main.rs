@@ -106,8 +106,8 @@ fn as_client(args: Args, config: Config) {
 
     // Figure out what our op is
     let op = match args.cmd_exec {
-        True => vec!(String::from("exec")),
-        False => match args.arg_component {
+        true => String::from("exec"),
+        false => match args.arg_component {
             Some(component) => component,
             None => panic!("No component specified!"),
         }
@@ -118,7 +118,7 @@ fn as_client(args: Args, config: Config) {
         Some(command) => command,
         None => match args.arg_action {
             Some(action) => action,
-            None => vec!(String::from("")),
+            None => String::from(""),
         }
     };
 
