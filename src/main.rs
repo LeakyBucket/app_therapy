@@ -48,11 +48,11 @@ struct Args {
     flag_gen_keys: bool,
     flag_version: bool,
     cmd_exec: bool,
-    arg_application: Option<Vec<String>>,
-    arg_command: Option<Vec<String>>,
-    arg_config: Option<Vec<String>>,
-    arg_component: Option<Vec<String>>,
-    arg_action: Option<Vec<String>>,
+    arg_application: Option<String>,
+    arg_command: Option<String>,
+    arg_config: Option<String>,
+    arg_component: Option<String>,
+    arg_action: Option<String>,
 }
 
 fn main() {
@@ -65,7 +65,7 @@ fn main() {
         None => panic!("Failed to parse config file!"),
     };
 
-    println!("{:?}", args);
+    //println!("{:?}", args);
 
     match &args.flag_gen_keys {
         &true => crypto::generate_keys(),
@@ -74,8 +74,6 @@ fn main() {
             &false => as_client(args, config),
         }
     }
-
-    println!("User: {}\nPassword: {}", config.user.login, config.user.password);
 }
 
 fn as_agent(args: Args, config: Config) {
@@ -127,7 +125,7 @@ fn as_client(args: Args, config: Config) {
     };
 
     // Figure out what our op is
-    let op = match args.cmd_exec {
+    let mut task = match args.cmd_exec {
         true => String::from("exec"),
         false => match args.arg_component {
             Some(component) => component,
@@ -144,5 +142,8 @@ fn as_client(args: Args, config: Config) {
         }
     };
 
-    let message = crypto::new_box(&args.arg_component, &pk, &sk);
+    task.push_str(":");
+    task.push_str(&command);
+
+    let message = crypto::new_box(task.as_bytes(), &pk, &sk);
 }
