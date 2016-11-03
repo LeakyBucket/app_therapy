@@ -75,7 +75,7 @@ fn main() {
 }
 
 fn as_agent(args: Args, config: Config) {
-    let listener = TcpListener::bind(&config.agent_address).unwrap();
+    let listener = TcpListener::bind(config.agent_address.as_str()).unwrap();
 
     for stream in listener.incoming() {
         match stream {
