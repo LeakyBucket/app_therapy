@@ -1,6 +1,11 @@
 {
+  "agent_address": "127.0.0.1:3000",
   "user": {
     "login": "me",
     "password": "mine"
+  },
+  "crypto": {
+    "pub_key_file": "~/app_therapy.pub",
+    "priv_key_file": "~/app_therapy.priv"
   }
 }
