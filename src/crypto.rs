@@ -1,3 +1,7 @@
+use std::error::Error;
+use std::io::prelude::*;
+use std::fs::File;
+
 use sodiumoxide::crypto::box_;
 use sodiumoxide::crypto::box_::{Nonce, PublicKey, SecretKey};
 
@@ -25,4 +29,26 @@ pub fn to_pub(key: &[u8]) -> Option<PublicKey> {
 
 pub fn to_priv(key: &[u8]) -> Option<SecretKey> {
     SecretKey::from_slice(key)
+}
+
+pub fn generate_keys() {
+    let (pub_key, priv_key) = box_::gen_keypair();
+    let mut pub_file = match File::create(&"./app_therapy.pub") {
+        Err(reason) => panic!("Couldn't create public key: {}", reason.description()),
+        Ok(file) => file,
+    };
+    let mut priv_file = match File::create(&"./app_therapy.priv") {
+        Err(reason) => panic!("Couldn't create private key: {}", reason.description()),
+        Ok(file) => file,
+    };
+
+    match pub_file.write_all(&pub_key.0) {
+        Err(why) => panic!("Couldn't write public key file: {}", why.description()),
+        Ok(_) => println!("Created ./app_therapy.pub"),
+    }
+
+    match priv_file.write_all(&priv_key.0) {
+        Err(why) => panic!("Couldn't write private key file: {}", why.description()),
+        Ok(_) => println!("Created ./app_therapy.priv"),
+    }
 }
