@@ -1,6 +1,7 @@
 extern crate app_therapy;
-extern crate rustc_serialize;
 extern crate docopt;
+extern crate sodiumoxide;
+extern crate rustc_serialize;
 
 use app_therapy::config::*;
 use app_therapy::client;
@@ -8,7 +9,10 @@ use app_therapy::crypto;
 use app_therapy::server;
 
 use docopt::Docopt;
+use sodiumoxide::crypto::box_::{PUBLICKEYBYTES, SECRETKEYBYTES};
 use std::error::Error;
+use std::fs::File;
+use std::io::prelude::*;
 use std::net::{TcpListener, TcpStream};
 use std::thread;
 
@@ -94,14 +98,32 @@ fn as_agent(args: Args, config: Config) {
 fn as_client(args: Args, config: Config) {
     let mut stream = client::connect(&config.agent_address);
 
-    let pk = match crypto::to_pub(&config.crypto.pub_key_file) {
-        Some(key) => key,
-        None => panic!("Failed to retrieve public key"),
+    let mut pub_key_file = match File::open(&config.crypto.pub_key_file) {
+        Ok(file) => file,
+        Err(reason) => panic!("Failed to open public key file {}: {}", &config.crypto.pub_key_file, reason.description()),
+    };
+    let mut priv_key_file = match File::open(&config.crypto.priv_key_file) {
+        Ok(file) => file,
+        Err(reason) => panic!("Failed to open private key file {}: {}", &config.crypto.priv_key_file, reason.description()),
     };
 
-    let sk = match crypto::to_priv(&config.crypto.priv_key_file) {
-        Some(key) => key,
-        None => panic!("Failed to retrieve secret key"),
+    let mut pub_key_buf = vec![0; PUBLICKEYBYTES];
+    let mut priv_key_buf = vec![0; SECRETKEYBYTES];
+
+    let pk = match pub_key_file.read(&mut pub_key_buf) {
+        Ok(_) => match crypto::to_pub(&pub_key_buf) {
+            Some(key) => key,
+            None => panic!("Unable to convert public key!"),
+        },
+        Err(reason) => panic!("Can't read public key data"),
+    };
+
+    let sk = match priv_key_file.read(&mut priv_key_buf) {
+        Ok(_) => match crypto::to_priv(&priv_key_buf) {
+            Some(key) => key,
+            None => panic!("Unable to convert private key!"),
+        },
+        Err(reason) => panic!("Can't read private key data"),
     };
 
     // Figure out what our op is
