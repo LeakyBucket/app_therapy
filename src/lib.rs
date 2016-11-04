@@ -10,3 +10,4 @@ pub mod config;
 pub mod crypto;
 pub mod client;
 pub mod server;
+pub mod messaging;
