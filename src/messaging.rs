@@ -1,5 +1,5 @@
 pub const CONTEXT: [&'static str; 2] = ["dbms", "cache"];
-pub const SEPARATOR: &'static str = ":";
+pub const SEPARATOR: &'static str = "\u{fe34}";
 
 #[derive(Debug, PartialEq)]
 pub enum Message {
@@ -88,7 +88,7 @@ mod tests {
             application: Some("test_app".to_string()),
         };
 
-        assert_eq!(Message::from("dbms:index_status:test_app"), dbms);
+        assert_eq!(Message::from("dbms\u{fe34}index_status\u{fe34}test_app"), dbms);
     }
 
     #[test]
@@ -99,7 +99,7 @@ mod tests {
             application: Some("atcms".to_string()),
         };
 
-        assert_eq!(Message::from("cache:purge ^/.*$:atcms"), cache);
+        assert_eq!(Message::from("cache\u{fe34}purge ^/.*$\u{fe34}atcms"), cache);
     }
 
     #[test]
@@ -110,7 +110,7 @@ mod tests {
             application: Some("test_app".to_string()),
         };
 
-        assert_eq!(dbms.to_payload(), "dbms:index_status:test_app".to_string());
+        assert_eq!(dbms.to_payload(), "dbms\u{fe34}index_status\u{fe34}test_app".to_string());
     }
 
     #[test]
@@ -121,6 +121,6 @@ mod tests {
             application: Some("atcms".to_string()),
         };
 
-        assert_eq!(cache.to_payload(), "cache:purge ^/.*$:atcms".to_string());
+        assert_eq!(cache.to_payload(), "cache\u{fe34}purge ^/.*$\u{fe34}atcms".to_string());
     }
 }
