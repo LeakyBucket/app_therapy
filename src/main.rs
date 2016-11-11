@@ -24,7 +24,6 @@ Usage:
   app_therapy --version
   app_therapy --gen-keys
   app_therapy --agent [--config=<config_file>]
-  app_therapy exec <command> --app=<application> [--config=<config_file>]
   app_therapy <component> [<action>] --app=<application>
 
 Options:
@@ -36,9 +35,8 @@ Options:
   --app=<application>     Specify the application context to use
 
 Subcommands:
-  exec                    Run the given command via the specified <agent>
-  logs                    Display logs via the specified <agent>
   dbms                    Query the dbms via the specified <agent>
+  cache                   Perform actions on the caching layer
 ";
 
 #[derive(Debug, RustcDecodable)]
@@ -47,7 +45,6 @@ struct Args {
     flag_config: Vec<String>,
     flag_gen_keys: bool,
     flag_version: bool,
-    cmd_exec: bool,
     arg_application: Option<String>,
     arg_command: Option<String>,
     arg_config: Option<String>,
@@ -125,12 +122,9 @@ fn as_client(args: Args, config: Config) {
     };
 
     // Figure out what our op is
-    let mut task = match args.cmd_exec {
-        true => String::from("exec"),
-        false => match args.arg_component {
-            Some(component) => component,
-            None => panic!("No component specified!"),
-        }
+    let mut task = match args.arg_component {
+        Some(component) => component,
+        None => panic!("No component specified!"),
     };
 
     // Figure out what our command is, if there is one
