@@ -1,33 +1,79 @@
+pub const CONTEXT: [&'static str; 2] = ["dbms", "cache"];
+pub const SEPARATOR: &'static str = ":";
+
 #[derive(Debug, PartialEq)]
-pub enum ReceivedMessage {
-    Exec { command: String, application: Option<String> },
-    Log { action: Option<String>, application: Option<String>},
-    Dbms { action: String, application: Option<String> },
-    None,
+pub enum Message {
+    Dbms { context: &'static str, action: String, application: Option<String> },
+    Cache { context: &'static str, action: String, application: Option<String> },
+    Invalid,
 }
 
-impl ReceivedMessage {
-    fn new(parts: Vec<&str>) -> ReceivedMessage {
+impl Message {
+    fn new(parts: Vec<&str>) -> Message {
         match parts[0] {
-            "exec" => ReceivedMessage::Exec {
-                command: parts[1].to_string(),
-                application: Some(parts[2].to_string())
-            },
-            "log" => ReceivedMessage::Log {
-                action: Some(parts[1].to_string()),
-                application: Some(parts[2].to_string())
-            },
-            "dbms" => ReceivedMessage::Dbms {
+            "dbms" => Message::Dbms {
+                context: CONTEXT[0],
                 action: parts[1].to_string(),
                 application: Some(parts[2].to_string())
             },
-            _ => ReceivedMessage::None,
+            "cache" => Message::Cache {
+                context: CONTEXT[1],
+                action: parts[1].to_string(),
+                application: Some(parts[2].to_string())
+            },
+            _ => Message::Invalid,
         }
     }
-}
 
-pub fn parse_message(raw_message: &str) -> ReceivedMessage {
-    ReceivedMessage::new(raw_message.split(':').collect())
+    fn from(raw_message: &str) -> Message {
+        Message::new(raw_message.split(SEPARATOR).collect())
+    }
+
+    fn to_payload(self) -> String {
+        match self {
+            Message::Dbms{ context, action, application } => match application {
+                Some(app) => {
+                    let mut message = context.to_string();
+
+                    message.push_str(SEPARATOR);
+                    message.push_str(&action);
+                    message.push_str(SEPARATOR);
+                    message.push_str(&app);
+
+                    message
+                },
+                None => {
+                    let mut message = context.to_string();
+
+                    message.push_str(SEPARATOR);
+                    message.push_str(&action);
+
+                    message
+                },
+            },
+            Message::Cache{ context, action, application  } => match application {
+                Some(app) => {
+                    let mut message = context.to_string();
+
+                    message.push_str(SEPARATOR);
+                    message.push_str(&action);
+                    message.push_str(SEPARATOR);
+                    message.push_str(&app);
+
+                    message
+                },
+                None => {
+                    let mut message = context.to_string();
+
+                    message.push_str(SEPARATOR);
+                    message.push_str(&action);
+
+                    message
+                },
+            },
+            Message::Invalid => "".to_string(),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -35,32 +81,46 @@ mod tests {
     use super::*;
 
     #[test]
-    fn exec_parsing() {
-        let exec = ReceivedMessage::Exec {
-            command: "bundle exec rake".to_string(),
-            application: Some("test_app".to_string()),
-        };
-
-        assert_eq!(parse_message("exec:bundle exec rake:test_app"), exec);
-    }
-
-    #[test]
-    fn log_parsing() {
-        let log = ReceivedMessage::Log {
-            action: Some("-f".to_string()),
-            application: Some("test_app".to_string()),
-        };
-
-        assert_eq!(parse_message("log:-f:test_app"), log);
-    }
-
-    #[test]
     fn dbms_parsing() {
-        let dbms = ReceivedMessage::Dbms {
+        let dbms = Message::Dbms {
+            context: CONTEXT[0],
             action: "index_status".to_string(),
             application: Some("test_app".to_string()),
         };
 
-        assert_eq!(parse_message("dbms:index_status:test_app"), dbms);
+        assert_eq!(Message::from("dbms:index_status:test_app"), dbms);
+    }
+
+    #[test]
+    fn cache_parsing() {
+        let cache = Message::Cache {
+            context: CONTEXT[1],
+            action: "purge ^/.*$".to_string(),
+            application: Some("atcms".to_string()),
+        };
+
+        assert_eq!(Message::from("cache:purge ^/.*$:atcms"), cache);
+    }
+
+    #[test]
+    fn dbms_to_payload() {
+        let dbms = Message::Dbms {
+            context: CONTEXT[0],
+            action: "index_status".to_string(),
+            application: Some("test_app".to_string()),
+        };
+
+        assert_eq!(dbms.to_payload(), "dbms:index_status:test_app".to_string());
+    }
+
+    #[test]
+    fn cache_to_payload() {
+        let cache = Message::Cache {
+            context: CONTEXT[1],
+            action: "purge ^/.*$".to_string(),
+            application: Some("atcms".to_string()),
+        };
+
+        assert_eq!(cache.to_payload(), "cache:purge ^/.*$:atcms".to_string());
     }
 }
