@@ -57,9 +57,10 @@ fn main() {
                       .and_then(|d| d.decode())
                       .unwrap_or_else(|e| e.exit());
 
-    let config = match load_config() {
-        Some(config) => config,
-        None => panic!("Failed to parse config file!"),
+    // Set default config file name if none is given
+    let config_file = match args.arg_config_file {
+        Some(ref file) => file.clone(),
+        None => "app_therapy.json".to_string(),
     };
 
     //println!("{:?}", args);
