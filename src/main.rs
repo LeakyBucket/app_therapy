@@ -68,14 +68,14 @@ fn main() {
     match &args.flag_gen_keys {
         &true => crypto::generate_keys(),
         &false => match &args.flag_agent {
-            &true => as_agent(args, config),
-            &false => as_client(args, config),
+            &true => as_agent(args, AgentConfig::read(&config_file).unwrap()),
+            &false => as_client(args, ClientConfig::read(&config_file).unwrap()),
         }
     }
 }
 
-fn as_agent(args: Args, config: Config) {
-    let listener = TcpListener::bind(config.agent_address.as_str()).unwrap();
+fn as_agent(args: Args, config: AgentConfig) {
+    let listener = TcpListener::bind(config.listen.as_str()).unwrap();
 
     for stream in listener.incoming() {
         match stream {
