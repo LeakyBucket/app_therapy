@@ -91,7 +91,7 @@ fn as_agent(args: Args, config: AgentConfig) {
     }
 }
 
-fn as_client(args: Args, config: Config) {
+fn as_client(args: Args, config: ClientConfig) {
     let mut stream = client::connect(&config.agent_address);
 
     let mut pub_key_file = match File::open(&config.crypto.pub_key_file) {
