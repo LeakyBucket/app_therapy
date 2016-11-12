@@ -49,6 +49,22 @@ pub struct ClientConfig {
     pub crypto: Crypto,
 }
 
+impl ClientConfig {
+    pub fn read(filename: &str) -> Option<ClientConfig> {
+        let mut config_data = String::new();
+
+        let mut config_file = match File::open(&filename) {
+            Err(why) => panic!("Couldn't open {}: {}", &filename, why.description()),
+            Ok(file) => file,
+        };
+
+        match config_file.read_to_string(&mut config_data) {
+            Ok(_) => serde_json::from_str(&config_data).unwrap(),
+            Err(_) => None,
+        }
+    }
+}
+
 #[derive(Deserialize)]
 pub struct User {
     pub login: String,
