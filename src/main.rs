@@ -24,7 +24,7 @@ Usage:
   app_therapy --version
   app_therapy --gen-keys
   app_therapy --agent [--config=<config_file>]
-  app_therapy <component> [<action>] --app=<application>
+  app_therapy <component> <action> --app=<application> [--config=<config_file>]
 
 Options:
   -h, --help              Show this screen
@@ -47,7 +47,7 @@ struct Args {
     flag_version: bool,
     arg_application: Option<String>,
     arg_command: Option<String>,
-    arg_config: Option<String>,
+    arg_config_file: Option<String>,
     arg_component: Option<String>,
     arg_action: Option<String>,
 }
