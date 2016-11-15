@@ -9,7 +9,7 @@ pub enum Message {
 }
 
 impl Message {
-    fn new(parts: Vec<&str>) -> Message {
+    pub fn new(parts: Vec<&str>) -> Message {
         match parts[0] {
             "dbms" => Message::Dbms {
                 context: CONTEXT[0],
@@ -25,11 +25,11 @@ impl Message {
         }
     }
 
-    fn from(raw_message: &str) -> Message {
+    pub fn from(raw_message: &str) -> Message {
         Message::new(raw_message.split(SEPARATOR).collect())
     }
 
-    fn to_payload(self) -> String {
+    pub fn to_payload(self) -> String {
         match self {
             Message::Dbms{ context, action, application } => match application {
                 Some(app) => {
