@@ -5,10 +5,10 @@ use std::fs::File;
 use sodiumoxide::crypto::box_;
 use sodiumoxide::crypto::box_::{Nonce, PublicKey, SecretKey};
 
-pub fn new_box(contents: &[u8], pub_key: &PublicKey, priv_key: &SecretKey) -> Vec<u8>{
+pub fn new_box(contents: &[u8], pub_key: &PublicKey, priv_key: &SecretKey) -> (box_::Nonce, Vec<u8>) {
     let nonce = box_::gen_nonce();
 
-    box_::seal(contents, &nonce, &pub_key, &priv_key)
+    (nonce, box_::seal(contents, &nonce, &pub_key, &priv_key))
 }
 
 pub fn re_box(contents: &[u8], pub_key: &PublicKey, priv_key: &SecretKey, nonce: &Nonce) -> Vec<u8> {
