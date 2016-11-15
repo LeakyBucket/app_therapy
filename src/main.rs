@@ -14,6 +14,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::net::{TcpListener, TcpStream};
+use std::process::exit;
 use std::thread;
 
 const USAGE: &'static str = "
@@ -57,6 +58,10 @@ fn main() {
                       .and_then(|d| d.decode())
                       .unwrap_or_else(|e| e.exit());
 
+    if args.flag_version {
+        println!("Version 0.1.0");
+        exit(0);
+    }
     // Set default config file name if none is given
     let config_file = match args.arg_config_file {
         Some(ref file) => file.clone(),
