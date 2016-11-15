@@ -6,10 +6,11 @@ extern crate rustc_serialize;
 use app_therapy::config::*;
 use app_therapy::client;
 use app_therapy::crypto;
+use app_therapy::messaging::{ Message };
 use app_therapy::server;
 
 use docopt::Docopt;
-use sodiumoxide::crypto::box_::{PUBLICKEYBYTES, SECRETKEYBYTES};
+use sodiumoxide::crypto::box_::{Nonce, PUBLICKEYBYTES, SECRETKEYBYTES};
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
@@ -25,7 +26,7 @@ Usage:
   app_therapy --version
   app_therapy --gen-keys
   app_therapy --agent [--config=<config_file>]
-  app_therapy <component> <action> --app=<application> [--config=<config_file>]
+  app_therapy <component> <action> [--app=<application>] [--config=<config_file>]
 
 Options:
   -h, --help              Show this screen
@@ -97,8 +98,6 @@ fn as_agent(args: Args, config: AgentConfig) {
 }
 
 fn as_client(args: Args, config: ClientConfig) {
-    let mut stream = client::connect(&config.agent_address);
-
     let mut pub_key_file = match File::open(&config.crypto.pub_key_file) {
         Ok(file) => file,
         Err(reason) => panic!("Failed to open public key file {}: {}", &config.crypto.pub_key_file, reason.description()),
@@ -127,23 +126,18 @@ fn as_client(args: Args, config: ClientConfig) {
         Err(reason) => panic!("Can't read private key data"),
     };
 
-    // Figure out what our op is
-    let mut task = match args.arg_component {
-        Some(component) => component,
-        None => panic!("No component specified!"),
+    //println!("{:?}", args);
+
+    let application = match args.arg_application {
+        Some(app) => app,
+        None => "".to_string(),
     };
 
-    // Figure out what our command is, if there is one
-    let command = match args.arg_command {
-        Some(command) => command,
-        None => match args.arg_action {
-            Some(action) => action,
-            None => String::from(""),
-        }
-    };
+    let message = Message::new(vec![&args.arg_component.unwrap(), &args.arg_action.unwrap(), &application]);
 
-    task.push_str(":");
-    task.push_str(&command);
+    let (nonce, boxed_message) = crypto::new_box(message.to_payload().as_bytes(), &pk, &sk);
 
-    let message = crypto::new_box(task.as_bytes(), &pk, &sk);
+    println!("{:?}", boxed_message);
+
+    let mut stream = client::connect(&config.agent_address);
 }
