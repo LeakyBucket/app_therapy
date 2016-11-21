@@ -67,8 +67,7 @@ impl ClientConfig {
 
 #[derive(Deserialize)]
 pub struct User {
-    pub login: String,
-    pub password: String,
+    pub user_name: String
 }
 
 #[derive(Deserialize)]
