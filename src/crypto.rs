@@ -1,9 +1,46 @@
 use std::error::Error;
-use std::io::prelude::*;
 use std::fs::File;
+use std::io::prelude::*;
+use std::marker::Sized;
 
 use sodiumoxide::crypto::box_;
-use sodiumoxide::crypto::box_::{Nonce, PublicKey, SecretKey};
+use sodiumoxide::crypto::box_::{Nonce, PublicKey, SecretKey, PUBLICKEYBYTES, SECRETKEYBYTES};
+
+trait FileBacked {
+    fn read_from(file_name: &str) -> Option<Self> where Self: Sized;
+}
+
+impl FileBacked for PublicKey {
+    fn read_from(file_name: &str) -> Option<PublicKey> {
+        let mut file = match File::open(&file_name) {
+            Ok(file) => file,
+            Err(reason) => panic!("Failed to open public key file {}: {}", &file_name, reason.description()),
+        };
+
+        let mut raw_data = vec![0; PUBLICKEYBYTES];
+
+        match file.read(&mut raw_data) {
+            Ok(_) => to_pub(&raw_data),
+            Err(reason) => panic!("Can't read public key data: {}", reason.description()),
+        }
+    }
+}
+
+impl FileBacked for SecretKey {
+    fn read_from(file_name: &str) -> Option<SecretKey> {
+        let mut file = match File::open(&file_name) {
+            Ok(file) => file,
+            Err(reason) => panic!("Failed to open private key file {}: {}", &file_name, reason.description()),
+        };
+
+        let mut raw_data = vec![0; SECRETKEYBYTES];
+
+        match file.read(&mut raw_data) {
+            Ok(_) => to_priv(&raw_data),
+            Err(reason) => panic!("Can't read public key data: {}", reason.description()),
+        }
+    }
+}
 
 pub fn new_box(contents: &[u8], pub_key: &PublicKey, priv_key: &SecretKey) -> (box_::Nonce, Vec<u8>) {
     let nonce = box_::gen_nonce();
