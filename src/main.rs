@@ -44,12 +44,11 @@ Subcommands:
 #[derive(Debug, RustcDecodable)]
 struct Args {
     flag_agent: bool,
-    flag_config: Vec<String>,
+    flag_config: Option<String>,
     flag_gen_keys: bool,
     flag_version: bool,
     arg_application: Option<String>,
     arg_command: Option<String>,
-    arg_config_file: Option<String>,
     arg_component: Option<String>,
     arg_action: Option<String>,
 }
@@ -63,8 +62,9 @@ fn main() {
         println!("Version 0.1.0");
         exit(0);
     }
+
     // Set default config file name if none is given
-    let config_file = match args.arg_config_file {
+    let config_file = match args.flag_config {
         Some(ref file) => file.clone(),
         None => "app_therapy.json".to_string(),
     };
