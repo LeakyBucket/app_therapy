@@ -1,4 +1,5 @@
 extern crate app_therapy;
+extern crate byteorder;
 extern crate docopt;
 extern crate sodiumoxide;
 extern crate rustc_serialize;
@@ -9,6 +10,7 @@ use app_therapy::crypto;
 use app_therapy::messaging::{ Message };
 use app_therapy::server;
 
+use byteorder::{NetworkEndian, WriteBytesExt};
 use docopt::Docopt;
 use sodiumoxide::crypto::box_::{Nonce, PUBLICKEYBYTES, SECRETKEYBYTES};
 use std::error::Error;
@@ -139,5 +141,8 @@ fn as_client(args: Args, config: ClientConfig) {
 
     println!("{:?}", boxed_message);
 
+    let message_size: u64 = (&config.user.user_name.len() + SEPARATOR.len() + NONCEBYTES + &boxed_message.len()) as u64;
+
     let mut stream = client::connect(&config.agent_address);
+    let _ = stream.write_u64::<NetworkEndian>(message_size);
 }

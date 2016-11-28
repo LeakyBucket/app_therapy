@@ -11,6 +11,9 @@ serde = "*"
 serde_json = "*"
 serde_derive = "*"
 
+# Because types
+byteorder = "*"
+
 # message encryption
 sodiumoxide = "*"
 
