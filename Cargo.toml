@@ -17,6 +17,9 @@ byteorder = "*"
 # message encryption
 sodiumoxide = "*"
 
+# message parsing
+nom = "^2.0"
+
 # For arg stuff
 docopt = "*"
 rustc-serialize = "*"

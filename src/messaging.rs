@@ -1,26 +1,41 @@
+use nom::IResult;
+use sodiumoxide::crypto::box_::{Nonce, NONCEBYTES};
+
 pub const CONTEXT: [&'static str; 2] = ["dbms", "cache"];
 pub const SEPARATOR: &'static str = "\u{fe34}";
 
 #[derive(Debug, PartialEq)]
 pub enum Message {
-    Dbms { context: &'static str, action: String, application: Option<String> },
-    Cache { context: &'static str, action: String, application: Option<String> },
+    Dbms {
+        context: &'static str,
+        action: String,
+        application: Option<String>,
+    },
+    Cache {
+        context: &'static str,
+        action: String,
+        application: Option<String>,
+    },
     Invalid,
 }
 
 impl Message {
     pub fn new(parts: Vec<&str>) -> Message {
         match parts[0] {
-            "dbms" => Message::Dbms {
-                context: CONTEXT[0],
-                action: parts[1].to_string(),
-                application: Some(parts[2].to_string())
-            },
-            "cache" => Message::Cache {
-                context: CONTEXT[1],
-                action: parts[1].to_string(),
-                application: Some(parts[2].to_string())
-            },
+            "dbms" => {
+                Message::Dbms {
+                    context: CONTEXT[0],
+                    action: parts[1].to_string(),
+                    application: Some(parts[2].to_string()),
+                }
+            }
+            "cache" => {
+                Message::Cache {
+                    context: CONTEXT[1],
+                    action: parts[1].to_string(),
+                    application: Some(parts[2].to_string()),
+                }
+            }
             _ => Message::Invalid,
         }
     }
@@ -31,47 +46,97 @@ impl Message {
 
     pub fn to_payload(self) -> String {
         match self {
-            Message::Dbms{ context, action, application } => match application {
-                Some(app) => {
-                    let mut message = context.to_string();
+            Message::Dbms { context, action, application } => {
+                match application {
+                    Some(app) => {
+                        let mut message = context.to_string();
 
-                    message.push_str(SEPARATOR);
-                    message.push_str(&action);
-                    message.push_str(SEPARATOR);
-                    message.push_str(&app);
+                        message.push_str(SEPARATOR);
+                        message.push_str(&action);
+                        message.push_str(SEPARATOR);
+                        message.push_str(&app);
 
-                    message
-                },
-                None => {
-                    let mut message = context.to_string();
+                        message
+                    }
+                    None => {
+                        let mut message = context.to_string();
 
-                    message.push_str(SEPARATOR);
-                    message.push_str(&action);
+                        message.push_str(SEPARATOR);
+                        message.push_str(&action);
 
-                    message
-                },
-            },
-            Message::Cache{ context, action, application  } => match application {
-                Some(app) => {
-                    let mut message = context.to_string();
+                        message
+                    }
+                }
+            }
+            Message::Cache { context, action, application } => {
+                match application {
+                    Some(app) => {
+                        let mut message = context.to_string();
 
-                    message.push_str(SEPARATOR);
-                    message.push_str(&action);
-                    message.push_str(SEPARATOR);
-                    message.push_str(&app);
+                        message.push_str(SEPARATOR);
+                        message.push_str(&action);
+                        message.push_str(SEPARATOR);
+                        message.push_str(&app);
 
-                    message
-                },
-                None => {
-                    let mut message = context.to_string();
+                        message
+                    }
+                    None => {
+                        let mut message = context.to_string();
 
-                    message.push_str(SEPARATOR);
-                    message.push_str(&action);
+                        message.push_str(SEPARATOR);
+                        message.push_str(&action);
 
-                    message
-                },
-            },
+                        message
+                    }
+                }
+            }
             Message::Invalid => "".to_string(),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct Payload<'a> {
+    requestor: String,
+    nonce: Nonce,
+    the_box: &'a [u8],
+}
+
+fn take_until_empty(input: &[u8]) -> IResult<&[u8], &[u8]> {
+    take!(input, input.len())
+}
+
+named!(parse_raw<&[u8], Payload>,
+       chain!(
+           requestor: take_until_and_consume!(SEPARATOR) ~
+           nonce: take!(NONCEBYTES)                      ~
+           the_box: take_until_empty,
+           || {
+                  let nonce = match Nonce::from_slice(nonce) {
+                      Some(nonce) => nonce,
+                      _ => panic!("Failed to extract Nonce!")
+                  };
+
+                  let requestor = match String::from_utf8(requestor.to_vec()) {
+                      Ok(data) => data,
+                      _ => panic!("Failed to read Sender Information")
+                  };
+
+                  Payload {
+                      requestor: requestor,
+                      nonce: nonce,
+                      the_box: the_box,
+                  }
+              }
+       )
+);
+
+impl<'a> Payload<'a> {
+    pub fn new(raw: &[u8]) -> Option<Payload> {
+        match parse_raw(raw) {
+            IResult::Done(_, payload) => Some(payload),
+            IResult::Error(error) => panic!("Payload Error: {:?}", error),
+            _ => None,
         }
     }
 }
