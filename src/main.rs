@@ -7,12 +7,12 @@ extern crate rustc_serialize;
 use app_therapy::config::*;
 use app_therapy::client;
 use app_therapy::crypto;
-use app_therapy::messaging::{ Message };
+use app_therapy::messaging::{ Message, SEPARATOR };
 use app_therapy::server;
 
 use byteorder::{NetworkEndian, WriteBytesExt};
 use docopt::Docopt;
-use sodiumoxide::crypto::box_::{Nonce, PUBLICKEYBYTES, SECRETKEYBYTES};
+use sodiumoxide::crypto::box_::{Nonce, NONCEBYTES, PUBLICKEYBYTES, SECRETKEYBYTES};
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
@@ -70,8 +70,6 @@ fn main() {
         Some(ref file) => file.clone(),
         None => "app_therapy.json".to_string(),
     };
-
-    //println!("{:?}", args);
 
     match &args.flag_gen_keys {
         &true => crypto::generate_keys(),
@@ -141,8 +139,20 @@ fn as_client(args: Args, config: ClientConfig) {
 
     println!("{:?}", boxed_message);
 
+    let mut response = vec![0; 1000];
     let message_size: u64 = (&config.user.user_name.len() + SEPARATOR.len() + NONCEBYTES + &boxed_message.len()) as u64;
 
     let mut stream = client::connect(&config.agent_address);
     let _ = stream.write_u64::<NetworkEndian>(message_size);
+    let _ = stream.write(config.user.user_name.as_bytes());
+    let _ = stream.write(SEPARATOR.as_bytes());
+    let _ = stream.write(&nonce.0);
+    let _ = stream.write(&boxed_message);
+
+    match stream.flush() {
+        Ok(_) => (),
+        Err(err) => panic!("Failed to write to socket: {}", err.description()),
+    }
+
+    let _ = stream.read_to_end(&mut response);
 }
