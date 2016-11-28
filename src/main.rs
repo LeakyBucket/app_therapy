@@ -87,9 +87,9 @@ fn as_agent(args: Args, config: AgentConfig) {
 
     for stream in listener.incoming() {
         match stream {
-            Ok(stream) => {
+            Ok(mut stream) => {
                 thread::spawn(move|| {
-                    server::process_request(stream)
+                    server::process_request(&mut stream)
                 });
             },
             Err(e) => {
