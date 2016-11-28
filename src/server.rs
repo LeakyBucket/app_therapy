@@ -12,10 +12,13 @@ pub fn process_request(stream: &mut TcpStream) {
         }
     };
 
+    println!("Bytes in message: {:?}", length);
 
-    println!("{:?}", request);
     let mut message = vec![0; length as usize];
     let _ = stream.take(length).read_to_end(&mut message);
+
+    println!("Message: {:?}", message);
+    println!("Message is {} bytes long", message.len());
 
     let parts = Payload::new(&message);
 
