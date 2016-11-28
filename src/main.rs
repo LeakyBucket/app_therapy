@@ -115,7 +115,7 @@ fn as_client(args: Args, config: ClientConfig) {
             Some(key) => key,
             None => panic!("Unable to convert public key!"),
         },
-        Err(reason) => panic!("Can't read public key data"),
+        Err(_) => panic!("Can't read public key data"),
     };
 
     let sk = match priv_key_file.read(&mut priv_key_buf) {
@@ -123,7 +123,7 @@ fn as_client(args: Args, config: ClientConfig) {
             Some(key) => key,
             None => panic!("Unable to convert private key!"),
         },
-        Err(reason) => panic!("Can't read private key data"),
+        Err(_) => panic!("Can't read private key data"),
     };
 
     //println!("{:?}", args);
