@@ -74,4 +74,5 @@ pub struct User {
 pub struct Crypto {
     pub pub_key_file: String,
     pub priv_key_file: String,
+    pub agent_key_file: String,
 }
