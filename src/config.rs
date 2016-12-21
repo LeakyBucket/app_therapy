@@ -8,6 +8,7 @@ pub struct AgentConfig {
     pub listen: String,
     pub public_key: String,
     pub secret_key: String,
+    pub users: Vec<Vec<String>>,
     pub dbms: Option<DbmsConfig>,
     pub cache: Option<CacheConfig>,
 }
