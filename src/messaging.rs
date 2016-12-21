@@ -97,9 +97,9 @@ impl Message {
 
 #[derive(Debug)]
 pub struct Payload<'a> {
-    requestor: String,
-    nonce: Nonce,
-    the_box: &'a [u8],
+    pub requestor: String,
+    pub nonce: Nonce,
+    pub the_box: &'a [u8],
 }
 
 fn take_until_empty(input: &[u8]) -> IResult<&[u8], &[u8]> {
@@ -118,7 +118,7 @@ named!(parse_raw<&[u8], Payload>,
                   };
 
                   let requestor = match String::from_utf8(requestor.to_vec()) {
-                      Ok(data) => data,
+                      Ok(data) => data.trim_matches('\u{0}').to_string(),
                       _ => panic!("Failed to read Sender Information")
                   };
 
