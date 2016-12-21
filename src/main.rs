@@ -7,14 +7,17 @@ extern crate rustc_serialize;
 use app_therapy::config::*;
 use app_therapy::client;
 use app_therapy::crypto;
+use app_therapy::crypto::{FileBacked};
 use app_therapy::messaging::{ Message, SEPARATOR };
 use app_therapy::server;
 
 use byteorder::{NetworkEndian, WriteBytesExt};
 use docopt::Docopt;
 use sodiumoxide::crypto::box_::{Nonce, NONCEBYTES, PUBLICKEYBYTES, SECRETKEYBYTES};
+use sodiumoxide::crypto::box_::{PublicKey, SecretKey, NONCEBYTES};
 use std::error::Error;
 use std::fs::File;
+use std::collections::HashMap;
 use std::io::prelude::*;
 use std::net::{TcpListener, TcpStream};
 use std::process::exit;
@@ -84,10 +87,17 @@ fn as_agent(args: Args, config: AgentConfig) {
     let listener = TcpListener::bind(config.listen.as_str()).unwrap();
 
     for stream in listener.incoming() {
+        let local_keys = keys.clone();
+        let agent_key = match PublicKey::read_from(&config.public_key) {
+            Some(key) => key,
+            None => panic!("Couldn't read our own secret key")
+        };
+
         match stream {
             Ok(mut stream) => {
                 thread::spawn(move|| {
-                    server::process_request(&mut stream)
+
+                    server::process_request(&mut stream, agent_key, &local_keys)
                 });
             },
             Err(e) => {

@@ -1,9 +1,11 @@
 use byteorder::{NetworkEndian, ReadBytesExt};
 use messaging::Payload;
+use sodiumoxide::crypto::box_::{PublicKey, SecretKey};
+use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::net::TcpStream;
 
-pub fn process_request(stream: &mut TcpStream) {
+pub fn process_request(stream: &mut TcpStream, agent_pub: PublicKey, key_list: &Arc<HashMap<String, SecretKey>>) {
     let length = match stream.take(8).read_u64::<NetworkEndian>() {
         Ok(len) => len,
         Err(_) => {
