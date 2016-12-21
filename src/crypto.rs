@@ -6,13 +6,13 @@ use std::marker::Sized;
 use sodiumoxide::crypto::box_;
 use sodiumoxide::crypto::box_::{Nonce, PublicKey, SecretKey, PUBLICKEYBYTES, SECRETKEYBYTES};
 
-trait FileBacked {
+pub trait FileBacked {
     fn read_from(file_name: &str) -> Option<Self> where Self: Sized;
 }
 
 impl FileBacked for PublicKey {
     fn read_from(file_name: &str) -> Option<PublicKey> {
-        let mut file = match File::open(&file_name) {
+        let mut file = match File::open(file_name) {
             Ok(file) => file,
             Err(reason) => panic!("Failed to open public key file {}: {}", &file_name, reason.description()),
         };
@@ -28,7 +28,7 @@ impl FileBacked for PublicKey {
 
 impl FileBacked for SecretKey {
     fn read_from(file_name: &str) -> Option<SecretKey> {
-        let mut file = match File::open(&file_name) {
+        let mut file = match File::open(file_name) {
             Ok(file) => file,
             Err(reason) => panic!("Failed to open private key file {}: {}", &file_name, reason.description()),
         };
