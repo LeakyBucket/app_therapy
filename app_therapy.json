@@ -4,7 +4,8 @@
     "user_name": "me"
   },
   "crypto": {
-    "pub_key_file": "/Users/leakybucket/app_therapy.pub",
-    "priv_key_file": "/Users/leakybucket/app_therapy.priv"
+    "pub_key_file": "/Users/leakybucket/git/app_therapy/app_therapy.pub",
+    "priv_key_file": "/Users/leakybucket/git/app_therapy/app_therapy.priv",
+    "agent_key_file": "/Users/leakybucket/git/app_therapy/server.pub"
   }
 }
