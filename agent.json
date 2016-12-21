@@ -1,0 +1,17 @@
+{
+  "listen": "127.0.0.1:8080",
+  "public_key": "/Users/leakybucket/git/app_therapy/server.pub",
+  "secret_key": "/Users/leakybucket/git/app_therapy/server.priv",
+  "users": [
+    ["me", "/Users/leakybucket/git/app_therapy/app_therapy.priv"]
+  ],
+  "dbms": {
+    "app": "postgres",
+    "host": "localhost",
+    "port": "5432",
+    "username": "leakybucket"
+  },
+  "cache": {
+    "app": "varnish"
+  }
+}
