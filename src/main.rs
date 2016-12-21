@@ -13,14 +13,13 @@ use app_therapy::server;
 
 use byteorder::{NetworkEndian, WriteBytesExt};
 use docopt::Docopt;
-use sodiumoxide::crypto::box_::{Nonce, NONCEBYTES, PUBLICKEYBYTES, SECRETKEYBYTES};
 use sodiumoxide::crypto::box_::{PublicKey, SecretKey, NONCEBYTES};
 use std::error::Error;
-use std::fs::File;
 use std::collections::HashMap;
 use std::io::prelude::*;
-use std::net::{TcpListener, TcpStream};
+use std::net::{TcpListener};
 use std::process::exit;
+use std::sync::Arc;
 use std::thread;
 
 const USAGE: &'static str = "
@@ -84,6 +83,12 @@ fn main() {
 }
 
 fn as_agent(args: Args, config: AgentConfig) {
+    // Currently the keys structure is immutable.  Ideally this would move out into
+    // some form of actor type structure that could respond to requests for keys as well
+    // as instructions to reload the key list without restarting the app.
+    let key_map: HashMap<String, SecretKey> = server::load_keys(&config.users);
+    let keys = Arc::new(key_map);
+
     let listener = TcpListener::bind(config.listen.as_str()).unwrap();
 
     for stream in listener.incoming() {
@@ -108,34 +113,17 @@ fn as_agent(args: Args, config: AgentConfig) {
 }
 
 fn as_client(args: Args, config: ClientConfig) {
-    let mut pub_key_file = match File::open(&config.crypto.pub_key_file) {
-        Ok(file) => file,
-        Err(reason) => panic!("Failed to open public key file {}: {}", &config.crypto.pub_key_file, reason.description()),
-    };
-    let mut priv_key_file = match File::open(&config.crypto.priv_key_file) {
-        Ok(file) => file,
-        Err(reason) => panic!("Failed to open private key file {}: {}", &config.crypto.priv_key_file, reason.description()),
+    let pk = match PublicKey::read_from(&config.crypto.agent_key_file) {
+        Some(key) => key,
+        None => panic!("Unable to convert public key!"),
     };
 
-    let mut pub_key_buf = vec![0; PUBLICKEYBYTES];
-    let mut priv_key_buf = vec![0; SECRETKEYBYTES];
-
-    let pk = match pub_key_file.read(&mut pub_key_buf) {
-        Ok(_) => match crypto::to_pub(&pub_key_buf) {
-            Some(key) => key,
-            None => panic!("Unable to convert public key!"),
-        },
-        Err(_) => panic!("Can't read public key data"),
+    let sk = match SecretKey::read_from(&config.crypto.priv_key_file) {
+        Some(key) => key,
+        None => panic!("Unable to convert private key!"),
     };
 
-    let sk = match priv_key_file.read(&mut priv_key_buf) {
-        Ok(_) => match crypto::to_priv(&priv_key_buf) {
-            Some(key) => key,
-            None => panic!("Unable to convert private key!"),
-        },
-        Err(_) => panic!("Can't read private key data"),
-    };
-
+    println!("Public key: {:?}", &pk);
     //println!("{:?}", args);
 
     let application = match args.arg_application {
@@ -147,7 +135,8 @@ fn as_client(args: Args, config: ClientConfig) {
 
     let (nonce, boxed_message) = crypto::new_box(message.to_payload().as_bytes(), &pk, &sk);
 
-    println!("{:?}", boxed_message);
+    println!("Nonce: {:?}", &nonce);
+    println!("Boxed: {:?}", &boxed_message);
 
     let mut response = vec![0; 1000];
     let message_size: u64 = (&config.user.user_name.len() + SEPARATOR.len() + NONCEBYTES + &boxed_message.len()) as u64;
@@ -158,11 +147,6 @@ fn as_client(args: Args, config: ClientConfig) {
     let _ = stream.write(SEPARATOR.as_bytes());
     let _ = stream.write(&nonce.0);
     let _ = stream.write(&boxed_message);
-
-    match stream.flush() {
-        Ok(_) => (),
-        Err(err) => panic!("Failed to write to socket: {}", err.description()),
-    }
 
     let _ = stream.read_to_end(&mut response);
 }
